@@ -3,12 +3,60 @@ app: timers-article
 console: true
 service: timers-article
 
-frameworkVersion: '3'
+frameworkVersion: "3"
+
+package:
+  individually: true
+  exclude:
+    - "**/*"
 
 provider:
   name: aws
   runtime: nodejs14.x
+  environment:
+    STAGE: ${sls:stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Scan
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+          Resource: !GetAtt TimestampTable.Arn
 
 functions:
-  hello:
-    handler: handler.hello
+  timestamp:
+    handler: timestamp.handler
+    environment:
+      TimestampTable: !Ref TimestampTable
+    package:
+      include:
+        - timestamp.js
+    events:
+      - http:
+          method: POST
+          path: stamp
+      - http:
+          method: GET
+          path: summary
+      - http:
+          method: DELETE
+          path: summary
+
+resources:
+  Resources:
+    TimestampTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        BillingMode: PROVISIONED
+        TableName: TimestampTable-${sls:stage}
