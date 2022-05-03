@@ -9,10 +9,13 @@ plugins:
   - serverless-lift
 
 constructs:
-  my-queue:
+  persistentError:
     type: queue
     worker:
-      handler: src/report-generator.handler
+      package:
+        include:
+          - lambas/sqsPersistentError.js
+      handler: sqsPersistentError.handler
 
 package:
   individually: true
@@ -39,9 +42,9 @@ functions:
     handler: schedule1Minute.handler
     package:
       include:
-        - schedule1Minute.js
+        - lambas/schedule1Minute.js
     environment:
-      apiGatewayId: ${ApiGatewayRestApi}
+      apiGatewayId: !Ref ApiGatewayRestApi
     events:
       - schedule:
           rate: cron(* * * * ? *)
@@ -53,7 +56,7 @@ functions:
       TimestampTable: !Ref TimestampTable
     package:
       include:
-        - timestamp.js
+        - lambas/timestamp.js
     events:
       - http:
           method: POST
