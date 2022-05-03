@@ -26,6 +26,13 @@ provider:
           Resource: !GetAtt TimestampTable.Arn
 
 functions:
+  schedule1Minute:
+    handler: schedule1Minute.handler
+    events:
+      - schedule:
+          rate: cron(* * * * ? *)
+          enabled: true
+
   timestamp:
     handler: timestamp.handler
     environment:
