@@ -5,6 +5,15 @@ service: timers-article
 
 frameworkVersion: "3"
 
+plugins:
+  - serverless-lift
+
+constructs:
+  my-queue:
+    type: queue
+    worker:
+      handler: src/report-generator.handler
+
 package:
   individually: true
   exclude:
@@ -28,10 +37,15 @@ provider:
 functions:
   schedule1Minute:
     handler: schedule1Minute.handler
+    package:
+      include:
+        - schedule1Minute.js
+    environment:
+      apiGatewayId: ${ApiGatewayRestApi}
     events:
       - schedule:
           rate: cron(* * * * ? *)
-          enabled: true
+          enabled: false
 
   timestamp:
     handler: timestamp.handler
