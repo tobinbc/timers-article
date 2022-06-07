@@ -1,0 +1,33 @@
+org: boffinsridge
+app: timers-article
+console: true
+service: step-functions-states
+
+frameworkVersion: "3"
+
+plugins:
+  - serverless-step-functions
+
+package:
+  individually: true
+  exclude:
+    - "**/*"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  environment:
+    STAGE: ${sls:stage}
+
+functions:
+  schedule1Minute:
+    handler: schedule1Minute.handler
+    package:
+      include:
+        - lambas/schedule1Minute.js
+    environment:
+      apiGatewayId: !ImportValue TimersArticleApiGatewayRestApi
+    events:
+      - schedule:
+          rate: cron(* * * * ? *)
+          enabled: false

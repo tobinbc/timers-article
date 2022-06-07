@@ -1,18 +1,17 @@
-"use strict";
-const { randomUUID } = require("crypto");
-const { DynamoDB } = require("aws-sdk");
+import { randomUUID }  from "crypto"
+import { DynamoDB } from"aws-sdk"
 const dc = new DynamoDB.DocumentClient();
 
-const TableName = process.env.TimestampTable;
+const TableName = process.env.TimestampTable!;
 
-module.exports.handler = async (event) => {
+export const handler = async (event:any) => {
   console.log(JSON.stringify(event));
-  const method = event && event.httpMethod ? event.httpMethod : "";
+  const method = event && event.httpMethod ? event.httpMethod : "POST"; // could be direct invoked
 
   let body = "";
   switch (method) {
     case "GET": {
-      const { Items } = await dc
+      const { Items = [] } = await dc
         .scan({
           TableName,
         })
@@ -21,7 +20,7 @@ module.exports.handler = async (event) => {
       break;
     }
     case "DELETE": {
-      const { Items } = await dc
+      const { Items = [] } = await dc
         .scan({
           TableName,
         })

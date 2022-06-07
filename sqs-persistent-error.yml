@@ -1,23 +1,27 @@
 org: boffinsridge
 app: timers-article
 console: true
-service: monitor
+service: sqs-persistent-error
 
 frameworkVersion: "3"
+
+plugins:
+  - serverless-lift
+
+constructs:
+  queue:
+    type: queue
+    worker:
+      package:
+        include:
+          - lambas/sqsPersistentError.js
+      handler: sqsPersistentError.handler
 
 package:
   individually: true
   exclude:
     - "**/*"
 
-plugins:
-  - serverless-bundle
-
-custom:
-  bundle:
-    sourcemaps: true   
-    externals:
-      - aws-sdk
 provider:
   name: aws
   runtime: nodejs14.x
@@ -34,10 +38,25 @@ provider:
           Resource: !GetAtt TimestampTable.Arn
 
 functions:
+  schedule1Minute:
+    handler: schedule1Minute.handler
+    package:
+      include:
+        - lambas/schedule1Minute.js
+    environment:
+      apiGatewayId: !Ref ApiGatewayRestApi
+    events:
+      - schedule:
+          rate: cron(* * * * ? *)
+          enabled: false
+
   timestamp:
-    handler: lambdas/timestamp.handler
+    handler: timestamp.handler
     environment:
       TimestampTable: !Ref TimestampTable
+    package:
+      include:
+        - lambas/timestamp.js
     events:
       - http:
           method: POST
@@ -65,26 +84,3 @@ resources:
           WriteCapacityUnits: 1
         BillingMode: PROVISIONED
         TableName: TimestampTable-${sls:stage}
-    InvokeTimestampLambda:
-      Type: AWS::Lambda::Permission
-      Properties:
-        Action: lambda:invokeFunction
-        FunctionName: !Ref TimestampLambdaFunction
-        Principal: !Sub "${AWS::AccountId}"
-  Outputs:
-    TimestampTable:
-      Value: !GetAtt TimestampTable.Arn
-      Export:
-        Name: TimersArticleTimestampTableArn
-    TimestampLambdaFunctionName:
-      Value: !Ref TimestampLambdaFunction
-      Export:
-        Name: TimersArticleTimestampLambdaFunctionName
-    TimestampLambdaFunctionArn:
-      Value: !GetAtt TimestampLambdaFunction.Arn
-      Export:
-        Name: TimersArticleTimestampLambdaFunctionArn
-    ApiGatewayRestApi:
-      Value: !Ref ApiGatewayRestApi
-      Export:
-        Name: TimersArticleApiGatewayRestApi

@@ -1,0 +1,28 @@
+org: boffinsridge
+app: timers-article
+console: true
+service: sqs-delay-fifo
+
+frameworkVersion: "3"
+
+plugins:
+  - serverless-lift
+  - serverless-bundle
+
+constructs:
+  queue:
+    type: queue
+    fifo: true
+    worker:
+      handler: lambdas/sqsDelayFifo.handler
+
+package:
+  individually: true
+  exclude:
+    - "**/*"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  environment:
+    STAGE: ${sls:stage}

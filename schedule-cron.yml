@@ -1,0 +1,31 @@
+org: boffinsridge
+app: timers-article
+console: true
+service: schedule-cron
+
+frameworkVersion: "3"
+
+
+package:
+  individually: true
+  exclude:
+    - "**/*"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  environment:
+    STAGE: ${sls:stage}
+
+functions:
+  schedule1Minute:
+    handler: schedule1Minute.handler
+    package:
+      include:
+        - lambas/schedule1Minute.js
+    environment:
+      apiGatewayId: !ImportValue TimersArticleApiGatewayRestApi
+    events:
+      - schedule:
+          rate: cron(* * * * ? *)
+          enabled: false

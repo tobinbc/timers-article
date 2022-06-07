@@ -1,0 +1,40 @@
+org: boffinsridge
+app: timers-article
+console: true
+service: cloudwatch-multi-rate
+
+frameworkVersion: "3"
+
+plugins:
+  - serverless-bundle
+custom:
+  bundle:
+    sourcemaps: true   
+    externals:
+      - aws-sdk
+package:
+  individually: true
+  exclude:
+    - "**/*"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  environment:
+    STAGE: ${sls:stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - cloudWatchEvents:putRule
+            - cloudWatchEvents:listRules
+            - cloudWatchEvents:deleteRules
+          Resource: '*'
+
+functions:
+  cloudwatchMultiRate:
+    handler: lambdas/cloudwatchMultiRate.handler
+    environment:
+      TimestampLambdaFunctionArn: !ImportValue TimersArticleTimestampLambdaFunctionArn
+    
